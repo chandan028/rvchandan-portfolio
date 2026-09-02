@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Palette — six values plus one link blue. Named here and in tailwind.config.ts.
+ * If a colour is not in this block it does not belong on the page.
+ *
+ *   ink     #0A0E1A  page ground
+ *   weave   #141B31  raised surface
+ *   thread  #26304F  rules, borders, diagram strokes
+ *   dust    #8A93A8  secondary text
+ *   silk    #F2F4F8  primary text
+ *   spider  #F03A42  the one bold spend
+ *   web     #6E93F5  links (lightened from suit blue to clear 4.5:1 on ink)
+ */
+
+:root {
+  --ink: #0a0e1a;
+  --weave: #141b31;
+  --thread: #26304f;
+  --dust: #8a93a8;
+  --silk: #f2f4f8;
+  --spider: #f03a42;
+  --web: #6e93f5;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Anchored sections clear the sticky header. */
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--ink);
+    color: var(--silk);
+    font-feature-settings: 'kern' 1, 'liga' 1;
+    text-rendering: optimizeLegibility;
+    /*
+     * Halftone. A comic-print dot screen at very low contrast — carries the
+     * theme without becoming a texture you have to read through.
+     */
+    background-image: radial-gradient(
+      var(--thread) 0.5px,
+      transparent 0.5px
+    );
+    background-size: 14px 14px;
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background-color: var(--spider);
+    color: var(--silk);
+  }
+
+  /* One focus treatment, everywhere, always visible. */
+  :focus-visible {
+    outline: 2px solid var(--spider);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Only suppress the ring for pointer users who did not tab to it. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  /* Section label. Navigational, not a decorative eyebrow above every heading. */
+  .section-label {
+    @apply font-mono text-micro uppercase text-dust;
+  }
+
+  /* The one bold thing: display type at poster weight. */
+  .display {
+    @apply font-display uppercase leading-[0.92] tracking-[-0.01em];
+  }
+
+  /* Body copy inside case studies. Held under 65ch. */
+  .prose-body {
+    @apply max-w-prose text-[1.0625rem] leading-[1.7] text-silk/85;
+  }
+
+  .link-underline {
+    @apply text-web underline decoration-thread decoration-1 underline-offset-4
+      transition-colors hover:decoration-web;
+  }
+
+  /* Skip link — visible the moment it receives focus. */
+  .skip-link {
+    @apply absolute left-4 top-4 z-50 -translate-y-24 bg-spider px-4 py-2
+      font-mono text-sm text-silk focus:translate-y-0;
+  }
+}
+
+/*
+ * 3D card tilt. Real perspective, driven by CSS custom properties that the
+ * pointer handler writes. No shadow — a hairline border and the tilt do the work.
+ */
+.tilt-scene {
+  perspective: 900px;
+}
+
+.tilt-card {
+  transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
+    translateZ(0);
+  transform-style: preserve-3d;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.tilt-card__lift {
+  transform: translateZ(28px);
+}
+
+/* Web-corner ornament sits above the card face in 3D. */
+.tilt-card__web {
+  transform: translateZ(14px);
+}
+
+/*
+ * Reduced motion. Not a token gesture — the WebGL hero stops animating, the
+ * tilt is disabled outright, and smooth scrolling is turned off.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .tilt-card {
+    transform: none !important;
+  }
+
+  .tilt-card__lift,
+  .tilt-card__web {
+    transform: none !important;
+  }
+}
