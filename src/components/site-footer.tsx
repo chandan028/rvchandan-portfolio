@@ -1,26 +1,37 @@
 import { site } from '@/data/site';
+import { SpiderMark } from './spider-mark';
+
+const links = [
+  { href: `mailto:${site.email}`, label: 'Email' },
+  { href: site.github, label: 'GitHub' },
+  { href: site.linkedin, label: 'LinkedIn' },
+  { href: site.resume, label: 'Résumé' },
+];
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-thread/60">
-      <div className="mx-auto flex max-w-shell flex-col gap-3 px-5 py-8 font-mono text-micro text-dust sm:flex-row sm:items-center sm:justify-between sm:px-8">
-        <p>
-          {site.name} · {site.location}
-        </p>
-        <p className="flex flex-wrap gap-x-5 gap-y-2">
-          <a href={`mailto:${site.email}`} className="hover:text-silk">
-            Email
-          </a>
-          <a href={site.github} className="hover:text-silk">
-            GitHub
-          </a>
-          <a href={site.linkedin} className="hover:text-silk">
-            LinkedIn
-          </a>
-          <a href={site.resume} className="hover:text-silk">
-            Résumé
-          </a>
-        </p>
+    <footer className="mt-8 border-t border-thread/60">
+      <div className="mx-auto flex max-w-shell flex-col gap-5 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="flex items-center gap-2.5">
+          <SpiderMark className="h-4 w-4 shrink-0 text-spider" />
+          <p className="font-mono text-micro text-dust">
+            {site.name} · {site.location}
+          </p>
+        </div>
+
+        <ul className="flex flex-wrap gap-x-2 gap-y-1">
+          {links.map((link) => (
+            <li key={link.label}>
+              {/* Padding rather than a box: a 40px target with nothing drawn. */}
+              <a
+                href={link.href}
+                className="flex min-h-[2.5rem] items-center rounded-inner px-2.5 font-mono text-micro text-dust transition-colors hover:text-silk"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
     </footer>
   );

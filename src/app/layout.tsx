@@ -3,6 +3,7 @@ import { Archivo_Black, Inter, JetBrains_Mono } from 'next/font/google';
 import { site } from '@/data/site';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { RevealObserver } from '@/components/reveal-observer';
 import './globals.css';
 
 const display = Archivo_Black({
@@ -68,10 +69,24 @@ export default function RootLayout({
       lang="en"
       className={`${display.variable} ${sans.variable} ${mono.variable}`}
     >
+      <head>
+        {/*
+          Marks the document as scripted before first paint, which is what
+          arms the scroll-reveal hidden state in CSS. Doing this in an effect
+          would flash every section in and then hide it again; doing it here
+          means a no-JS reader simply gets the page fully visible.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js')",
+          }}
+        />
+      </head>
       <body className="font-sans antialiased">
         <a href="#main" className="skip-link">
           Skip to content
         </a>
+        <RevealObserver />
         <SiteHeader />
         <main id="main">{children}</main>
         <SiteFooter />

@@ -129,15 +129,28 @@ export function HeroCanvas() {
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
-      <div className="absolute right-[-22%] top-[-30%] h-[42rem] w-[42rem] sm:right-[-8%] sm:top-[-18%]">
+      {/*
+        Warm bloom behind the web. It separates the lattice from the halftone
+        ground so the threads read as lit rather than as a faint grid.
+      */}
+      <div className="absolute right-[-20%] top-[-24%] h-[46rem] w-[46rem] rounded-full bg-[radial-gradient(circle,rgba(240,58,66,0.13),rgba(110,147,245,0.06)_42%,transparent_70%)] blur-2xl sm:right-[-6%] sm:top-[-14%]" />
+
+      <div className="absolute right-[-22%] top-[-26%] h-[44rem] w-[44rem] sm:right-[-6%] sm:top-[-14%] lg:h-[52rem] lg:w-[52rem]">
         {enabled ? (
           <WebLattice />
         ) : (
           <StaticWeb className="h-full w-full opacity-70" />
         )}
       </div>
-      {/* Keeps the web from competing with the headline on narrow screens. */}
-      <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-transparent" />
+
+      {/*
+        Legibility scrim. Opaque behind the headline on a narrow screen, where
+        the web sits directly under the text; on a wide one it thins out fast
+        so the lattice is actually visible rather than smothered.
+      */}
+      <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/20 sm:via-ink/70 sm:to-transparent" />
+      {/* Hands the section off to the page ground instead of ending on an edge. */}
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink to-transparent" />
     </div>
   );
 }
