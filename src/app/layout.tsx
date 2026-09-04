@@ -3,6 +3,7 @@ import { Archivo_Black, Inter, JetBrains_Mono } from 'next/font/google';
 import { site } from '@/data/site';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { RevealObserver } from '@/components/reveal-observer';
 import './globals.css';
 
 const display = Archivo_Black({
@@ -26,10 +27,29 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
+  /*
+   * The default title carries the search terms rather than a job title alone:
+   * "Backend Engineer — Java, Spring Boot & Applied AI" is what someone types,
+   * and it is what a shared link shows in a tab strip.
+   */
   title: {
     default: `${site.name} — ${site.role}`,
     template: `%s — ${site.name}`,
   },
+  keywords: [
+    'backend engineer',
+    'Java',
+    'Spring Boot',
+    'Spring Security',
+    'distributed systems',
+    'payments',
+    'Stripe',
+    'Razorpay',
+    'schema migration',
+    'applied AI',
+    'LLM agents',
+    'Bengaluru',
+  ],
   description: site.description,
   authors: [{ name: site.name, url: site.url }],
   creator: site.name,
@@ -68,10 +88,24 @@ export default function RootLayout({
       lang="en"
       className={`${display.variable} ${sans.variable} ${mono.variable}`}
     >
+      <head>
+        {/*
+          Marks the document as scripted before first paint, which is what
+          arms the scroll-reveal hidden state in CSS. Doing this in an effect
+          would flash every section in and then hide it again; doing it here
+          means a no-JS reader simply gets the page fully visible.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js')",
+          }}
+        />
+      </head>
       <body className="font-sans antialiased">
         <a href="#main" className="skip-link">
           Skip to content
         </a>
+        <RevealObserver />
         <SiteHeader />
         <main id="main">{children}</main>
         <SiteFooter />

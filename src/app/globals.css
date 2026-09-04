@@ -13,6 +13,9 @@
  *   silk    #F2F4F8  primary text
  *   spider  #F03A42  the one bold spend
  *   web     #6E93F5  links (lightened from suit blue to clear 4.5:1 on ink)
+ *
+ * Depth is a shadow problem, not a colour problem. Every raised surface uses
+ * the ring + ambient scale below, so it reads as raised on any ground.
  */
 
 :root {
@@ -23,13 +26,21 @@
   --silk: #f2f4f8;
   --spider: #f03a42;
   --web: #6e93f5;
+
+  /* Elevation. A white ring carries the edge, ambient darkness the height. */
+  --e1: 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --e2: 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 12px 28px -14px rgba(0, 0, 0, 0.9);
+  --e3: 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 26px 60px -22px rgba(0, 0, 0, 0.95),
+    0 4px 12px -6px rgba(0, 0, 0, 0.7);
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
     /* Anchored sections clear the sticky header. */
-    scroll-padding-top: 5rem;
+    scroll-padding-top: 5.5rem;
     -webkit-text-size-adjust: 100%;
   }
 
@@ -38,14 +49,14 @@
     color: var(--silk);
     font-feature-settings: 'kern' 1, 'liga' 1;
     text-rendering: optimizeLegibility;
+    /* Crisper text on macOS, per the interface-polish checklist. */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     /*
      * Halftone. A comic-print dot screen at very low contrast — carries the
      * theme without becoming a texture you have to read through.
      */
-    background-image: radial-gradient(
-      var(--thread) 0.5px,
-      transparent 0.5px
-    );
+    background-image: radial-gradient(var(--thread) 0.5px, transparent 0.5px);
     background-size: 14px 14px;
     background-attachment: fixed;
   }
@@ -59,7 +70,7 @@
   :focus-visible {
     outline: 2px solid var(--spider);
     outline-offset: 3px;
-    border-radius: 2px;
+    border-radius: 4px;
   }
 
   /* Only suppress the ring for pointer users who did not tab to it. */
@@ -76,6 +87,12 @@
 
   p {
     text-wrap: pretty;
+  }
+
+  /* Any figure that carries a raster gets the neutral separator, never a tint. */
+  img {
+    outline: 1px solid rgba(255, 255, 255, 0.1);
+    outline-offset: -1px;
   }
 }
 
@@ -102,40 +119,208 @@
 
   /* Skip link — visible the moment it receives focus. */
   .skip-link {
-    @apply absolute left-4 top-4 z-50 -translate-y-24 bg-spider px-4 py-2
-      font-mono text-sm text-silk focus:translate-y-0;
+    @apply absolute left-4 top-4 z-50 -translate-y-24 rounded-inner bg-spider
+      px-4 py-2 font-mono text-sm text-silk focus:translate-y-0;
+  }
+
+  /*
+   * Raised surface. Shadow rather than a border, so the same card works over
+   * the halftone ground, over the hero gradient, and over a diagram.
+   */
+  .surface {
+    @apply rounded-card bg-weave/55 shadow-e2 backdrop-blur-[2px];
+  }
+
+  /* Primary call to action. The only filled button on the site. */
+  .btn-primary {
+    @apply inline-flex min-h-[2.75rem] items-center gap-2 rounded-inner
+      bg-spider pl-5 pr-4 font-mono text-sm text-silk shadow-glow
+      transition-[scale,box-shadow,background-color] duration-150 ease-out
+      hover:bg-[#ff4b53] active:scale-[0.96];
+  }
+
+  /* Secondary. Ring instead of a border so it sits on any ground. */
+  .btn-ghost {
+    @apply inline-flex min-h-[2.75rem] items-center gap-2 rounded-inner
+      bg-weave/60 pl-5 pr-4 font-mono text-sm text-silk shadow-e1
+      transition-[scale,box-shadow,background-color] duration-150 ease-out
+      hover:bg-weave hover:shadow-e2 active:scale-[0.96];
+  }
+
+  /* Skill / stack token. Small, so the hit area is not the visible box. */
+  .chip {
+    @apply inline-flex items-center rounded-inner bg-weave/70 px-2.5 py-1
+      font-mono text-micro text-silk/85 shadow-e1
+      transition-[box-shadow,color,transform] duration-200 ease-swift;
+  }
+
+  .chip:hover {
+    @apply -translate-y-0.5 text-silk shadow-e2;
+  }
+
+  /* Anything that counts. Stops the digits reflowing as they animate. */
+  .numeric {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
   }
 }
 
+/* ---------------------------------------------------------------------------
+ * Scroll reveal
+ *
+ * Split and staggered, never one big container fade. The hidden state is
+ * scoped to `html.js` so that with JavaScript off — or if hydration never
+ * happens — every section is simply visible rather than blank.
+ * ------------------------------------------------------------------------ */
+
 /*
- * 3D card tilt. Real perspective, driven by CSS custom properties that the
- * pointer handler writes. No shadow — a hairline border and the tilt do the work.
+ * Declared here, not in tailwind.config.ts. Tailwind only emits a @keyframes
+ * block when its matching `animate-*` utility appears in the markup, and this
+ * one is referenced from a plain CSS rule — so configuring it there would
+ * leave `animation: rise` pointing at a keyframe that was never generated,
+ * and every revealed element would sit at opacity 0 forever.
  */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  filter: blur(4px);
+  will-change: transform, opacity, filter;
+}
+
+.js [data-reveal].is-visible {
+  animation: rise 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+/* The animation owns the final frame; drop the compositor hint afterwards. */
+.js [data-reveal].is-visible {
+  will-change: auto;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3D card
+ *
+ * Real perspective, driven by custom properties the pointer handler writes.
+ * `--mx`/`--my` track the cursor for the sheen; `--tilt-*` for the rotation.
+ * ------------------------------------------------------------------------ */
+
 .tilt-scene {
-  perspective: 900px;
+  perspective: 1000px;
 }
 
 .tilt-card {
+  position: relative;
   transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
     translateZ(0);
   transform-style: preserve-3d;
-  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-property: transform, box-shadow;
+  transition-duration: 260ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 
-.tilt-card__lift {
-  transform: translateZ(28px);
+/* Cursor-tracked sheen. Sits above the face, below the lifted content. */
+.tilt-sheen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms ease-out;
+  background: radial-gradient(
+    22rem circle at var(--mx, 50%) var(--my, 50%),
+    rgba(240, 58, 66, 0.16),
+    rgba(110, 147, 245, 0.07) 38%,
+    transparent 68%
+  );
 }
 
-/* Web-corner ornament sits above the card face in 3D. */
-.tilt-card__web {
-  transform: translateZ(14px);
+.tilt-sheen:hover::after,
+.tilt-sheen:focus-within::after {
+  opacity: 1;
 }
+
+/* Content planes. Lift reads as depth only while the card is tilting. */
+.tilt-card__lift {
+  transform: translateZ(30px);
+}
+
+.tilt-card__web {
+  transform: translateZ(16px);
+}
+
+/* Marquee needs a soft edge or the loop seam is obvious. */
+.edge-fade {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ---------------------------------------------------------------------------
+ * Reduced motion
+ *
+ * Not a token gesture: the WebGL hero stops animating, the tilt is disabled
+ * outright, reveals resolve to their final state, and the marquee holds still.
+ * ------------------------------------------------------------------------ */
 
 /*
- * Reduced motion. Not a token gesture — the WebGL hero stops animating, the
- * tilt is disabled outright, and smooth scrolling is turned off.
+ * Print. A recruiter saving the page to PDF gets no scrolling, so the reveal
+ * observer never fires and every section below the first page would come out
+ * blank. Force the final state, and drop the effects that cost ink and say
+ * nothing on paper.
  */
+@media print {
+  .js [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    animation: none !important;
+  }
+
+  body {
+    background-image: none;
+  }
+
+  .tilt-card,
+  .tilt-card__lift,
+  .tilt-card__web {
+    transform: none !important;
+  }
+
+  .tilt-sheen::after {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -149,12 +334,19 @@
     transition-duration: 0.001ms !important;
   }
 
-  .tilt-card {
-    transform: none !important;
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 
+  .tilt-card,
   .tilt-card__lift,
   .tilt-card__web {
     transform: none !important;
+  }
+
+  .tilt-sheen::after {
+    display: none;
   }
 }

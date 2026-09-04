@@ -7,14 +7,18 @@ import * as THREE from 'three';
 const THREAD = new THREE.Color('#26304F');
 const SPIDER = new THREE.Color('#F03A42');
 const WEB = new THREE.Color('#6E93F5');
+const SILK = new THREE.Color('#F2F4F8');
 
 type WebGeometry = {
   positions: Float32Array;
   colors: Float32Array;
+  /** Anchor points where a radial crosses a ring — drawn as dew. */
+  nodes: Float32Array;
+  nodeColors: Float32Array;
 };
 
 /**
- * Builds an orb web as line segments.
+ * Builds an orb web as line segments, plus the node cloud that sits on it.
  *
  * Radial threads run from the hub outwards; cross-threads sag between adjacent
  * radials, which is why each cross edge is subdivided rather than drawn
@@ -29,6 +33,8 @@ function buildWeb(
 ): WebGeometry {
   const positions: number[] = [];
   const colors: number[] = [];
+  const nodes: number[] = [];
+  const nodeColors: number[] = [];
   const SEGMENTS = 5; // sub-segments per cross-thread, for the sag
   const SAG = 0.86;
 
@@ -65,18 +71,27 @@ function buildWeb(
         const t1 = (s + 1) / SEGMENTS;
         // Sag profile: full radius at the anchors, pulled in at mid-span.
         const sag = (t: number) => r * (1 - (1 - SAG) * Math.sin(t * Math.PI));
-        push(
-          point(i + t0, sag(t0)),
-          point(i + t1, sag(t1)),
-          crossColor,
-        );
+        push(point(i + t0, sag(t0)), point(i + t1, sag(t1)), crossColor);
       }
+    }
+
+    /*
+     * Dew. Only on the outer rings — a node at every intersection turns the
+     * web into a dot grid and kills the line work that carries the shape.
+     */
+    for (let k = Math.ceil(rings / 2); k <= rings; k++) {
+      const p = point(i, (radius * k) / rings);
+      nodes.push(p.x, p.y, p.z);
+      const c = isAccent ? SPIDER : k === rings ? WEB : SILK;
+      nodeColors.push(c.r, c.g, c.b);
     }
   }
 
   return {
     positions: new Float32Array(positions),
     colors: new Float32Array(colors),
+    nodes: new Float32Array(nodes),
+    nodeColors: new Float32Array(nodeColors),
   };
 }
 
@@ -86,6 +101,7 @@ function Web({
   radius,
   accentEvery,
   opacity,
+  dew = 0,
   ...props
 }: {
   radials: number;
@@ -93,56 +109,118 @@ function Web({
   radius: number;
   accentEvery: number;
   opacity: number;
-} & ThreeElements['lineSegments']) {
-  const geometry = useMemo(() => {
-    const { positions, colors } = buildWeb(radials, rings, radius, accentEvery);
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    return g;
+  /** Point size for the dew cloud. Zero omits it entirely. */
+  dew?: number;
+} & ThreeElements['group']) {
+  const { lines, points } = useMemo(() => {
+    const built = buildWeb(radials, rings, radius, accentEvery);
+
+    const l = new THREE.BufferGeometry();
+    l.setAttribute('position', new THREE.BufferAttribute(built.positions, 3));
+    l.setAttribute('color', new THREE.BufferAttribute(built.colors, 3));
+
+    const p = new THREE.BufferGeometry();
+    p.setAttribute('position', new THREE.BufferAttribute(built.nodes, 3));
+    p.setAttribute('color', new THREE.BufferAttribute(built.nodeColors, 3));
+
+    return { lines: l, points: p };
   }, [radials, rings, radius, accentEvery]);
 
   return (
-    <lineSegments geometry={geometry} {...props}>
-      <lineBasicMaterial
-        vertexColors
-        transparent
-        opacity={opacity}
-        depthWrite={false}
-      />
-    </lineSegments>
+    <group {...props}>
+      <lineSegments geometry={lines}>
+        <lineBasicMaterial
+          vertexColors
+          transparent
+          opacity={opacity}
+          depthWrite={false}
+        />
+      </lineSegments>
+
+      {dew > 0 ? (
+        <points geometry={points}>
+          <pointsMaterial
+            vertexColors
+            transparent
+            size={dew}
+            sizeAttenuation
+            opacity={opacity * 0.9}
+            depthWrite={false}
+            // Additive keeps the dew reading as light on a dark ground rather
+            // than as flat dots sitting on top of the threads.
+            blending={THREE.AdditiveBlending}
+          />
+        </points>
+      ) : null}
+    </group>
   );
 }
 
-/** Two webs at different depths, plus pointer parallax on the whole rig. */
+/** Three webs at different depths, plus pointer parallax on the whole rig. */
 function Scene() {
   const rig = useRef<THREE.Group>(null);
   const near = useRef<THREE.Group>(null);
+  const mid = useRef<THREE.Group>(null);
   const far = useRef<THREE.Group>(null);
 
   useFrame((state, delta) => {
+    // Clamp: a backgrounded tab resumes with a huge delta and the whole rig
+    // would snap a quarter-turn on the first frame back.
+    const dt = Math.min(delta, 0.05);
+
     // Counter-rotation between the layers is what reads as depth.
-    if (near.current) near.current.rotation.z += delta * 0.035;
-    if (far.current) far.current.rotation.z -= delta * 0.022;
+    if (near.current) near.current.rotation.z += dt * 0.035;
+    if (mid.current) mid.current.rotation.z -= dt * 0.014;
+    if (far.current) far.current.rotation.z -= dt * 0.022;
+
+    // Slow breathing on the near layer. Small enough to feel alive, not float.
+    if (near.current) {
+      const s = 1 + Math.sin(state.clock.elapsedTime * 0.35) * 0.018;
+      near.current.scale.setScalar(s);
+    }
 
     if (rig.current) {
       const { x, y } = state.pointer;
       // Damped follow, so the rig trails the pointer instead of snapping.
-      rig.current.rotation.y +=
-        (x * 0.28 - rig.current.rotation.y) * Math.min(1, delta * 2.4);
-      rig.current.rotation.x +=
-        (-y * 0.2 - rig.current.rotation.x) * Math.min(1, delta * 2.4);
+      const k = Math.min(1, dt * 2.4);
+      rig.current.rotation.y += (x * 0.3 - rig.current.rotation.y) * k;
+      rig.current.rotation.x += (-y * 0.22 - rig.current.rotation.x) * k;
     }
   });
 
   return (
     <group ref={rig}>
-      <group ref={far} position={[1.4, 0.2, -5]} rotation={[0.5, 0.35, 0.4]}>
-        <Web radials={16} rings={6} radius={7.2} accentEvery={16} opacity={0.5} />
-      </group>
-      <group ref={near} position={[0, 0, 0]} rotation={[0.32, -0.28, 0]}>
-        <Web radials={20} rings={8} radius={5.4} accentEvery={7} opacity={0.95} />
-      </group>
+      <Web
+        ref={far}
+        position={[1.4, 0.2, -5]}
+        rotation={[0.5, 0.35, 0.4]}
+        radials={16}
+        rings={6}
+        radius={7.2}
+        accentEvery={16}
+        opacity={0.4}
+      />
+      <Web
+        ref={mid}
+        position={[-2.6, -1.4, -2.4]}
+        rotation={[-0.42, 0.5, 1.1]}
+        radials={12}
+        rings={5}
+        radius={4.4}
+        accentEvery={12}
+        opacity={0.3}
+      />
+      <Web
+        ref={near}
+        position={[0, 0, 0]}
+        rotation={[0.32, -0.28, 0]}
+        radials={20}
+        rings={8}
+        radius={5.4}
+        accentEvery={7}
+        opacity={0.95}
+        dew={0.075}
+      />
     </group>
   );
 }
