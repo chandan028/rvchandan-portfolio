@@ -27,10 +27,29 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
+  /*
+   * The default title carries the search terms rather than a job title alone:
+   * "Backend Engineer — Java, Spring Boot & Applied AI" is what someone types,
+   * and it is what a shared link shows in a tab strip.
+   */
   title: {
     default: `${site.name} — ${site.role}`,
     template: `%s — ${site.name}`,
   },
+  keywords: [
+    'backend engineer',
+    'Java',
+    'Spring Boot',
+    'Spring Security',
+    'distributed systems',
+    'payments',
+    'Stripe',
+    'Razorpay',
+    'schema migration',
+    'applied AI',
+    'LLM agents',
+    'Bengaluru',
+  ],
   description: site.description,
   authors: [{ name: site.name, url: site.url }],
   creator: site.name,

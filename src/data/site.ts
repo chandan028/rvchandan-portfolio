@@ -4,13 +4,31 @@
 
 export const site = {
   name: 'R V Chandan',
-  /** One sentence. This is the whole positioning statement. */
+  /**
+   * The identity line. Backend engineering leads and applied AI is the
+   * specialisation under it — not a second, competing identity. A reader who
+   * takes only this line away should still know what I am.
+   */
+  discipline: 'Backend Engineer — Java · Spring Boot · Applied AI',
+  /** One sentence: what I build, and at what scale. */
   positioning:
-    'Backend engineer building payment, identity and LLM-backed systems on a 1M+ LOC Java and Spring platform.',
-  /** Sub-line under the hero rule. Kept to two clauses. */
+    'I build production backend systems for identity, payments and trust-and-safety on a 1M+ LOC Java and Spring platform serving 5.5M+ students and 750K+ tutors.',
+  /** The arc. Three years read as a progression, not as a duration. */
   subline:
-    'Three years at an education marketplace serving 5.5M students and 750K tutors. Promoted twice.',
-  role: 'Software Engineer — Backend (Java, Spring Boot) & Applied AI',
+    'Payments first, then platform identity, now LLM tooling against the same codebase.',
+  /**
+   * Compact proof, sized for a six-second scan. Every item is defended by a
+   * case study further down the page — nothing here is a claim on its own.
+   */
+  proof: [
+    '3 years in production',
+    '2 promotions',
+    '15M-row live migration',
+    '1M+ LOC platform',
+  ],
+  /** Availability. Stated plainly, but it is not the headline. */
+  availability: 'Open to SDE 2 · Senior Backend · AI Engineering roles',
+  role: 'Backend Engineer — Java, Spring Boot & Applied AI',
   location: 'Bengaluru, India',
   email: 'chandanrv97@gmail.com',
   github: 'https://github.com/chandan028',
@@ -25,11 +43,12 @@ export const site = {
    */
   url: 'https://rvchandan.dev',
   description:
-    'R V Chandan — backend engineer in Bengaluru. Case studies on migrating identity across a live 15M-row table, an autonomous ticket-to-PR agent over 1.03M LOC, an eval-gated moderation pipeline, and owning money movement across Razorpay and Stripe.',
+    'R V Chandan — backend engineer in Bengaluru working in Java, Spring Boot, payments, identity and applied AI. Deep dives on a live 15M-row identity migration, an autonomous ticket-to-PR agent over 1.03M LOC, an eval-gated moderation pipeline, and owning money movement across Razorpay and Stripe.',
 } as const;
 
 export const navLinks = [
   { href: '/#work', label: 'Work' },
+  { href: '/#ownership', label: 'Scope' },
   { href: '/#experience', label: 'Experience' },
   { href: '/#project', label: 'Project' },
   { href: '/#skills', label: 'Skills' },

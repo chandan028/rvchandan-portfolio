@@ -26,6 +26,11 @@ export type CaseStudy = {
   standfirst: string;
   role: string;
   period: string;
+  /**
+   * The constraints, compressed to one scannable line. This is what a reader
+   * skimming four cards uses to judge whether the work was actually hard.
+   */
+  scale: string;
   stack: string[];
   diagram: DiagramKey;
   diagramCaption: string;
@@ -43,6 +48,7 @@ export const caseStudies: CaseStudy[] = [
       'The platform assumed a person was either a tutor or a student. Thousands of people were both, and were paying for it with two accounts. Fixing that meant changing what identity means, on a table with 15M rows, while everyone stayed logged in.',
     role: 'Software Engineer',
     period: 'May 2025 — Jul 2026',
+    scale: '15M rows · live traffic · no forced re-login · 170 services',
     stack: ['Java', 'Spring Boot', 'Spring Security', 'MySQL', 'Liquibase', 'Hibernate'],
     diagram: 'identity',
     diagramCaption:
@@ -108,6 +114,7 @@ export const caseStudies: CaseStudy[] = [
       'The interesting problem in an autonomous coding agent is not the editing. It is retrieval — deciding which five files out of a 1.03M-line, 601-model codebase a one-paragraph ticket is actually about — and then refusing to trust the result until it has been tested.',
     role: 'AI Engineer',
     period: 'Aug 2026 — Present',
+    scale: '1.03M LOC · 601 domain models · sandboxed edits · bounded retries',
     stack: ['Java', 'Groovy', 'Gemini', 'Tool use / MCP', 'git worktree', 'Jira API'],
     diagram: 'agent',
     diagramCaption:
@@ -173,6 +180,7 @@ export const caseStudies: CaseStudy[] = [
       'Building a moderation classifier is a week of work. Knowing whether a change to it made things better or worse is the entire problem. The prompt was never the hard part; the harness that refused to let a worse prompt ship was.',
     role: 'Software Engineer',
     period: 'May 2025 — Jul 2026',
+    scale: '3 media types · one policy · 10% accuracy gate · staged rollout',
     stack: ['Java', 'Spring Boot', 'Google Vertex AI', 'GCP Cloud Storage', 'Quartz'],
     diagram: 'moderation',
     diagramCaption:
@@ -238,6 +246,7 @@ export const caseStudies: CaseStudy[] = [
       'Payments code is judged differently from other code. A rendering bug is embarrassing; a settlement bug takes money from a real person and takes their trust with it. I owned this path from the first Razorpay integration through a mis-charge defect to a multi-currency Stripe launch.',
     role: 'Associate Software Engineer → Software Engineer',
     period: 'Sep 2023 — Jul 2026',
+    scale: '2 providers · one ledger · idempotent webhooks · 2 new markets',
     stack: ['Java', 'Spring Boot', 'MySQL', 'Razorpay', 'Stripe', 'Quartz'],
     diagram: 'money',
     diagramCaption:

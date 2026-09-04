@@ -36,6 +36,15 @@ export function WorkIndex() {
                 {study.hook}
               </p>
 
+              {/*
+                The constraints, before the stack. A reader skimming four cards
+                judges difficulty from this line, not from the technology list —
+                "15M rows under live traffic" says more than "MySQL" does.
+              */}
+              <p className="numeric relative mt-4 border-l-2 border-spider/70 pl-3 font-mono text-micro leading-relaxed text-dust">
+                {study.scale}
+              </p>
+
               {/* mt-auto pins the stack and CTA to the bottom so cards of
                   different hook lengths still line up across the row. */}
               <ul className="relative mt-auto flex flex-wrap gap-1.5 pt-6">

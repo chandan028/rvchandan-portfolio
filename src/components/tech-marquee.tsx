@@ -5,17 +5,18 @@ import { skills } from '@/data/skills';
  * should hit them in the first screen, not four sections down — and because a
  * band of motion under a static hero is what stops the fold feeling flat.
  *
- * The list is duplicated so the loop is seamless at -50%; the copy is hidden
- * from assistive tech so the stack is announced once.
+ * Built structurally rather than by group name. An earlier version looked each
+ * group up by its label with a non-null assertion, so renaming a group in the
+ * data file compiled cleanly and then crashed the build at render. Core groups
+ * lead, the rest fill in behind them, and nothing here knows what any group is
+ * called.
  */
-const ITEMS = [
-  ...skills.find((g) => g.label === 'Languages')!.items,
-  ...skills.find((g) => g.label === 'Frameworks')!.items,
-  ...skills.find((g) => g.label === 'Data')!.items,
-  ...skills.find((g) => g.label === 'Applied AI')!.items.slice(0, 4),
-  ...skills.find((g) => g.label === 'Payments')!.items.slice(0, 2),
-  ...skills.find((g) => g.label === 'Infrastructure')!.items.slice(0, 3),
-];
+const ITEMS = Array.from(
+  new Set([
+    ...skills.filter((g) => g.core).flatMap((g) => g.items),
+    ...skills.filter((g) => !g.core).flatMap((g) => g.items),
+  ]),
+).slice(0, 24);
 
 function Row({ hidden = false }: { hidden?: boolean }) {
   return (
@@ -42,6 +43,8 @@ export function TechMarquee() {
       // Not a live region and not decorative — it is a plain list of the stack.
       aria-label="Core stack"
     >
+      {/* Duplicated so the loop is seamless at -50%; the copy is hidden from
+          assistive tech so the stack is announced once. */}
       <div className="marquee-track flex w-max animate-marquee">
         <Row />
         <Row hidden />
